@@ -170,6 +170,28 @@ const App = () => {
     }
   };
 
+  const onCommentAnnotationHandler = () => {
+    if (!canvasCtx) return;
+
+    canvasCtx.fillStyle = annotationColor;
+    canvasCtx.font = "16px Arial";
+    const textWidth = canvasCtx.measureText(annotationText).width;
+    canvasCtx.fillText(
+      annotationText,
+      beginCoords?.x - textWidth / 2,
+      beginCoords?.y
+    );
+
+    setAnnotationText("");
+    setShowTextAnnotationDialog(false);
+  };
+
+  const endDrawing = () => {
+    if (!canvasCtx) return;
+    canvasCtx?.closePath();
+    isAnnotating = false;
+  };
+
   return (
     <ThemeProvider>
       <main className="p-6 w-full gap-4 flex flex-col items-center">
