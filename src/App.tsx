@@ -192,6 +192,24 @@ const App = () => {
     isAnnotating = false;
   };
 
+  const onPenColorChangeHandler = (color: string) => {
+    if (!canvasCtx) return;
+
+    setAnnotationColor(color);
+    canvasCtx.strokeStyle = color;
+  };
+
+  const lineStrokeWidthChangeHandler = (width: string) => {
+    if (!canvasCtx) return;
+    canvasCtx.lineWidth = +width;
+    setAnnotationStrokeWidth(width);
+  };
+
+  const shapeChangeHandler = (newShape: AnnotationShape) => {
+    setAnnotationShape(newShape);
+    setShowTextAnnotationDialog(false);
+  };
+
   return (
     <ThemeProvider>
       <main className="p-6 w-full gap-4 flex flex-col items-center">
