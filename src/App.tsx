@@ -1,28 +1,28 @@
+import {
+  SelectItem,
+  SelectTrigger,
+  SelectContent,
+} from "@radix-ui/react-select";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { strokeWidths } from "@/constants/stroke-widths";
+import { Select, SelectValue } from "@/components/ui/select";
+import ThemeProvider from "@/components/context/theme-provider";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Check, Circle, Square, PenTool, ALargeSmall } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import ThemeProvider from "@/components/context/theme-provider";
-import { AnnotationShape } from "./types/annotation-shapes";
-import { annotationColors } from "./constants/annotation-colors";
-import { SyntheticBaseEvent } from "./types/synthetic-base-event";
-import { Button } from "@/components/ui/button";
 import {
   VIDEO_WIDTH,
   VIDEO_HEIGHT,
   CANVAS_HEIGHT,
 } from "./constants/dimensions";
-import { Select, SelectValue } from "@/components/ui/select";
-import {
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@radix-ui/react-select";
-import { strokeWidths } from "@/constants/stroke-widths";
+import { AnnotationShape } from "./types/annotation-shapes";
 import { annotationShapes } from "./constants/annotation-shapes";
-import { Input } from "@/components/ui/input";
+import { annotationColors } from "./constants/annotation-colors";
+import { SyntheticBaseEvent } from "./types/synthetic-base-event";
 
 let captureInterval: NodeJS.Timeout;
-const FRAME_CAPTURE_INTERVAL = 1000;
+const FRAME_CAPTURE_INTERVAL = 2000;
 
 let isAnnotating = false;
 let canvasCtx!: CanvasRenderingContext2D;
@@ -48,7 +48,9 @@ const App = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
-  const [annotationSrc, setAnnotationSrc] = useState<MediaStream | null>(null);
+  const [annotationSrc, setAnnotationSrc] = useState<HTMLVideoElement | null>(
+    null
+  );
 
   const [annotationShape, setAnnotationShape] =
     useState<AnnotationShape>("line");
@@ -66,6 +68,8 @@ const App = () => {
     clearInterval(captureInterval);
     const tracks = mediaStream.getTracks();
     tracks.forEach((track) => track.stop());
+
+    setAnnotationSrc(videoRef?.current);
   }, [mediaStream]);
 
   useEffect(() => {
