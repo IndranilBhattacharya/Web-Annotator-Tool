@@ -5,6 +5,21 @@ import ThemeProvider from "@/components/context/theme-provider";
 import { AnnotationShape } from "./types/annotation-shapes";
 import { annotationColors } from "./constants/annotation-colors";
 import { SyntheticBaseEvent } from "./types/synthetic-base-event";
+import { Button } from "@/components/ui/button";
+import {
+  VIDEO_WIDTH,
+  VIDEO_HEIGHT,
+  CANVAS_HEIGHT,
+} from "./constants/dimensions";
+import { Select, SelectValue } from "@/components/ui/select";
+import {
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@radix-ui/react-select";
+import { strokeWidths } from "@/constants/stroke-widths";
+import { annotationShapes } from "./constants/annotation-shapes";
+import { Input } from "@/components/ui/input";
 
 let captureInterval: NodeJS.Timeout;
 const FRAME_CAPTURE_INTERVAL = 1000;
@@ -51,7 +66,7 @@ const App = () => {
     clearInterval(captureInterval);
     const tracks = mediaStream.getTracks();
     tracks.forEach((track) => track.stop());
-  }, [mediaStream, setAnnotationSrc]);
+  }, [mediaStream]);
 
   useEffect(() => {
     if (!mediaStream) return;
@@ -213,8 +228,143 @@ const App = () => {
   return (
     <ThemeProvider>
       <main className="p-6 w-full gap-4 flex flex-col items-center">
-        <Card className="w-full"></Card>
+        <Card className="w-full">
+          <div className="p-4 w-full flex items-center justify-between">
+            <span>
+              {((): string => {
+                if (!videoRef?.current) {
+                  return "No preview available";
+                } else if (annotationSrc) {
+                  return "Make annotations";
+                } else {
+                  return "Preview";
+                }
+              })()}
+            </span>
+            <div className="gap-3 flex items-center">
+              <Button variant="default" onClick={onStartScreenSharingHandler}>
+                Share Tab/Screen
+              </Button>
+              <Button variant="outline" onClick={onStopScreenShareHandling}>
+                Capture and Annotate
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        <video
+          muted
+          autoPlay
+          ref={videoRef}
+          width={VIDEO_WIDTH}
+          height={VIDEO_HEIGHT}
+          className="rounded-lg"
+          style={{
+            display: ((): "none" | "block" => {
+              if (annotationSrc || !mediaStream) {
+                return "none";
+              }
+              return "block";
+            })(),
+          }}
+        />
+
+        <div
+          className={`relative w-full flex items-center ${
+            annotationSrc ? "block" : "hidden"
+          }`}
+        >
+          <canvas
+            ref={canvasRef}
+            className="rounded-lg"
+            width={VIDEO_WIDTH}
+            height={CANVAS_HEIGHT}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={endDrawing}
+            onBlur={endDrawing}
+          />
+          <div className="absolute gap-4 top-1/4 right-0 flex flex-col">
+            <Select
+              value={annotationColor}
+              onValueChange={onPenColorChangeHandler}
+            >
+              <SelectTrigger>
+                <SelectValue>
+                  <div
+                    className="p-2.5 rounded-full"
+                    style={{ backgroundColor: annotationColor }}
+                  ></div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {annotationColors?.map((color) => (
+                  <SelectItem key={color} value={color}>
+                    <div
+                      style={{ backgroundColor: color }}
+                      className="p-2.5 rounded-full"
+                    ></div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={annotationStrokeWidth}
+              onValueChange={lineStrokeWidthChangeHandler}
+            >
+              <SelectTrigger>
+                <SelectValue>{`${annotationStrokeWidth} px`}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {strokeWidths?.map((width) => (
+                  <SelectItem key={width} value={width}>
+                    {`${width} px`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={annotationShape} onValueChange={shapeChangeHandler}>
+              <SelectTrigger>
+                <SelectValue>{annotationShapeJSX(annotationShape)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {annotationShapes?.map((shape) => (
+                  <SelectItem key={shape} value={shape}>
+                    {annotationShapeJSX(shape)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </main>
+      {showTextAnnotationDialog && (
+        <Card
+          className="p-2 w-[30vw] absolute"
+          style={{
+            top: beginCoords?.y,
+            left: beginCoords?.x,
+          }}
+        >
+          <div className="gap-3 flex w-full items-center">
+            <Input
+              type="text"
+              value={annotationText}
+              placeholder="Put your comment here"
+              onChange={({ target: { value } }) => setAnnotationText(value)}
+            />
+            <Button
+              variant="secondary"
+              className="px-2 py-0"
+              onClick={onCommentAnnotationHandler}
+            >
+              <Check />
+            </Button>
+          </div>
+        </Card>
+      )}
     </ThemeProvider>
   );
 };
